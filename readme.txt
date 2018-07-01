@@ -79,6 +79,39 @@ Watchdog:
 
 apt-get install watchdog
 
-TODO: watchdog configuration 
+watchdog configuration.
+Solution found in: 
+https://forum.armbian.com/topic/2898-how-to-install-enable-and-start-watchdog-in-h3/
 
+Hi - easiest way i found
+1) In /etc/systemd/system.conf set\uncomment
+(max seconds on H3 you can see in g_timeout in 'dmesg | grep "sunxi_wdt_probe"'.
+On H2 'dmesg | grep "watchdog"'.
+Its ok to set to 16 - it try to send "pings" every half of seted timer)
+RuntimeWatchdogSec=16
+ShutdownWatchdogSec=10min
+2) reboot, after it check output of "sudo lsof | grep /dev/watchdog" - if it say about systemd - all work
 
+ =======
+method 2:
+
+edit /etc/systemd/system/led-http-watchdog.service
+==
+[Unit]
+Description=LED HTTP Watchdog Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/bin/python /root/watchdog.py
+Restart=on-failure # or always, on-abort, etc
+
+[Install]
+WantedBy=multi-user.target
+
+===
+systemctl daemon-reload
+systemctl enable led-http-watchdog
+systemctl start led-http-watchdog
